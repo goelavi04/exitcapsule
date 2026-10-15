@@ -1,0 +1,1 @@
+"""ExitCapsule backend (FastAPI)."""

@@ -1,0 +1,1 @@
+"""ExitCapsule engine: ingest stage."""
