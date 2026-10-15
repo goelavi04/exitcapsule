@@ -1,0 +1,16 @@
+[project]
+name = "legacyapp"
+version = "0.1"
+requires-python = ">=3.8"
+classifiers = ["Programming Language :: Python :: 3.8"]
+dependencies = [
+    "PyYAML==5.4",
+    "requests",
+    "click<7",
+]
+
+[project.scripts]
+legacyapp = "legacyapp.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

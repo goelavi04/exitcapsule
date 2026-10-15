@@ -41,7 +41,12 @@ class Settings(BaseSettings):
     test_timeout_s: int = 120
 
     # Storage
-    home: Path = Path(".exitcapsule")
+    # Deliberately not called `home`: that would read the HOME env var.
+    exitcapsule_home: Path = Path(".exitcapsule")
+
+    @property
+    def home(self) -> Path:
+        return self.exitcapsule_home
 
     @property
     def runs_dir(self) -> Path:

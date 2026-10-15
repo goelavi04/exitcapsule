@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "poetry-app"
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+requests = "^2.20"
+attrs = "~19.3"
+toml = "0.10.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.0"
+
+[tool.poetry.group.docs.dependencies]
+sphinx = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

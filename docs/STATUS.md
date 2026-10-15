@@ -4,9 +4,13 @@ _Last updated: 2026-10-15_
 
 ## Current milestone
 
-**M1 — Ingest + manifests + AST usage + mapping** (next).
+**M2 — Metadata + risk scoring + `scan` table** (next).
 
 ## Done
+
+- **M1** — ingest, manifests, AST usage, mapping, scan-derived risk signals (tag `m1`).
+  - 3 synthetic fixture repos (`tests/fixtures/repos/`: legacyapp, setuppy_app, poetry_app) cover conflicts, undeclared, unused, private API, usage-site kinds, no-tests, setup.py/Pipfile/Poetry.
+  - Smoke-scanned the target repo: 16 dependencies found, scan in 0.1 s (metadata signals still pending → M2).
 
 - **M0** — environment + scaffold (tag `m0`).
   - Tools verified: git 2.50.1, gh 2.96.0 (logged in as `goelavi04`), uv 0.11.32, Python 3.12.4 + 3.13.3, Node 22.21.0, Ollama 0.40.2.
@@ -37,5 +41,4 @@ _Last updated: 2026-10-15_
 
 ## Next
 
-1. M1: ingest (shallow clone / local copy, Python hints), manifest parsers, AST usage scanner, import↔dist mapping, synthetic fixture repos + unit tests.
-2. M2: PyPI/GitHub metadata + risk scoring + `scan` table on target repo and one other repo.
+1. M2: PyPI/GitHub metadata + risk scoring + `scan` table on target repo and one other repo.

@@ -1,0 +1,6 @@
+-r requirements-base.txt
+PyYAML==3.13
+requests>=2.0  # http
+simplejson==3.8.0
+# flask==0.12.2
+--index-url https://pypi.org/simple

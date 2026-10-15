@@ -83,3 +83,11 @@ async def test_fake_generate(settings: Settings) -> None:
     p = FakeProvider(settings, responder=lambda s, u: '{"ok": true}')
     out = await p.generate("sys", "user")
     assert out.text == '{"ok": true}' and out.model_id == FAKE_MODEL_ID
+
+
+def test_settings_ignore_home_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOME", "/somewhere/else")
+    monkeypatch.setenv("EXITCAPSULE_HOME", "custom")
+    from pathlib import Path
+
+    assert Settings(_env_file=None).home == Path("custom")  # type: ignore[call-arg]
