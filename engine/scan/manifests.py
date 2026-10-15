@@ -413,7 +413,8 @@ def find_test_runners(root: Path) -> list[TestRunner]:
                 if key in seen:
                     continue
                 seen.add(key)
-                cmd = s[m.start() :].strip().strip("\"'")
+                cmd = re.sub(r"[\"'\],]+", " ", s[m.start() :]).strip()
+                cmd = re.sub(r"\s+", " ", cmd)
                 out.append(
                     TestRunner(
                         name=name, command=cmd[:200], location=Location(file=file, line=lineno)

@@ -4,9 +4,13 @@ _Last updated: 2026-10-15_
 
 ## Current milestone
 
-**M2 — Metadata + risk scoring + `scan` table** (next).
+**M3 — Baseline execution** (next).
 
 ## Done
+
+- **M2** — PyPI/GitHub metadata, deterministic risk scoring, `scan` table (tag `m2`).
+  - Target repo: 16 deps, 11 flagged (nose = dead test runner; setuptools/pydantic cross-manifest conflicts; appdirs/toml stale; requests private API; certifi undeclared). Scan ≈ 3 s cold, < 1 s warm.
+  - miguelgrinberg/microblog (55 deps, full `pip freeze`): runs unchanged; transitive pins downgraded to info.
 
 - **M1** — ingest, manifests, AST usage, mapping, scan-derived risk signals (tag `m1`).
   - 3 synthetic fixture repos (`tests/fixtures/repos/`: legacyapp, setuppy_app, poetry_app) cover conflicts, undeclared, unused, private API, usage-site kinds, no-tests, setup.py/Pipfile/Poetry.
@@ -41,4 +45,4 @@ _Last updated: 2026-10-15_
 
 ## Next
 
-1. M2: PyPI/GitHub metadata + risk scoring + `scan` table on target repo and one other repo.
+1. M3: baseline execution — uv envs per install path, import/CLI smoke, pytest (+junit, timeout, warnings), coverage of usage sites, install-failure fallback.

@@ -101,6 +101,15 @@ def scan_signals(
                 else "tooling/dev dependency (import not expected)"
             )
             out.append(_sig("unused", "info", detail))
+        elif dep.required_by:
+            out.append(
+                _sig(
+                    "unused",
+                    "info",
+                    "not imported directly; pinned transitive dependency of "
+                    + ", ".join(dep.required_by[:5]),
+                )
+            )
         else:
             loc = active[0].location
             out.append(
@@ -253,17 +262,72 @@ def metadata_signals(dep: Dependency) -> list[RiskSignal]:
                     ev,
                 )
             )
-    if md.wheel_312 is False and md.universal_wheel is False:
+    ver = md.installed_or_pinned or md.latest_version
+    if md.wheel_312 is False:
         out.append(
             _sig(
                 "py312_313_incompatible",
                 "medium",
-                f"no cp312 or universal wheel for {md.installed_or_pinned or md.latest_version}; "
-                "would build from source",
+                f"{ver} ships binary wheels but none for CPython 3.12; would build from source",
+                ev,
+            )
+        )
+    elif md.wheel_312 is None and md.installed_or_pinned:
+        out.append(
+            _sig(
+                "py312_313_incompatible",
+                "low",
+                f"{ver} is sdist-only (no wheels); installs by building from source",
+                ev,
+            )
+        )
+    if md.wheel_312 and md.wheel_313 is False:
+        out.append(
+            _sig(
+                "py312_313_incompatible",
+                "low",
+                f"{ver} has binary wheels for 3.12 but none for CPython 3.13",
                 ev,
             )
         )
     return out
+
+
+_DOWN: dict[str, Severity] = {"high": "medium", "medium": "low", "low": "info", "info": "info"}
+
+
+def indirect(signals: list[RiskSignal], required_by: list[str]) -> list[RiskSignal]:
+    """Downgrade metadata signals one level for transitive-only pins (documented rule)."""
+    via = ", ".join(required_by[:3])
+    return [
+        s.model_copy(
+            update={"severity": _DOWN[s.severity], "detail": f"{s.detail} (indirect via {via})"}
+        )
+        for s in signals
+    ]
+
+
+DEAD_KINDS = {
+    "stale",
+    "inactive_classifier",
+    "archived_upstream",
+    "py312_313_incompatible",
+    "not_on_pypi",
+}
+
+
+def dead_runner_signal(dep: Dependency, runner: str, where: str) -> RiskSignal | None:
+    """A declared test runner whose tool is abandoned / incompatible is a dead runner."""
+    bad = [s for s in dep.signals if s.kind in DEAD_KINDS and s.severity in ("medium", "high")]
+    if not bad:
+        return None
+    return _sig(
+        "dead_test_runner",
+        "high",
+        f"test runner '{runner}' ({where}) relies on {dep.name}: "
+        + "; ".join(s.detail for s in bad[:2]),
+        [e for s in bad for e in s.evidence],
+    )
 
 
 def apply(dep: Dependency, extra: list[RiskSignal]) -> None:

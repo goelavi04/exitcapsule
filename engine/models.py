@@ -130,6 +130,8 @@ class PackageMetadata(BaseModel):
     github_repo: str | None = None
     github_archived: bool | None = None
     github_pushed_at: str | None = None
+    requires_dist: list[str] = Field(default_factory=list)  # normalized names (no extras)
+    error: str | None = None  # metadata could not be (fully) fetched
     evidence: list[str] = Field(default_factory=list)
 
 
@@ -172,6 +174,7 @@ class Dependency(BaseModel):
     score: int = 0
     flagged: bool = False
     mapping_note: Claim | None = None
+    required_by: list[str] = Field(default_factory=list)  # other declared deps needing it
 
     @property
     def runtime(self) -> bool:

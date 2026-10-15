@@ -19,6 +19,16 @@ from engine.scan.usage import REMOVED_STDLIB, scan_usage
 
 MetadataHook = Callable[[list[Dependency]], None]
 
+# Test-runner name (as detected in manifests/CI) -> the distribution providing it.
+RUNNER_DISTS = {
+    "pytest": "pytest",
+    "nose": "nose",
+    "nose2": "nose2",
+    "tox": "tox",
+    "trial": "twisted",
+    "green": "green",
+}
+
 _TOOL_FILES = (
     "Procfile",
     "Dockerfile",
@@ -76,8 +86,27 @@ def scan_repo(
     )
 
     deps = build_dependencies(ms.deps, us.sites, us.imported, env_map)
+    # Test runners invoked by the repo (Makefile, tox, CI...) are dependencies too,
+    # even when no manifest declares them.
+    by_name = {d.name: d for d in deps}
+    for r in ms.runners:
+        dist = RUNNER_DISTS.get(r.name)
+        if dist and dist not in by_name:
+            by_name[dist] = Dependency(name=dist)
+            by_name[dist].mapping_note = observed(
+                f"test runner '{r.name}' -> {dist}",
+                note=f"invoked at {r.location.file}:{r.location.line}",
+            )
+            deps.append(by_name[dist])
     if metadata_hook:
         metadata_hook(deps)
+
+    # Who requires whom (from each package's Requires-Dist at the targeted version).
+    for d in deps:
+        if d.metadata:
+            for req in d.metadata.requires_dist:
+                if req in by_name and req != d.name:
+                    by_name[req].required_by.append(d.name)
 
     tool_files = _tool_files(root)
     for d in deps:
@@ -87,7 +116,19 @@ def scan_repo(
         sigs = risk.scan_signals(d, ms.conflicts, is_tool_dist(d.name), tool_use, us.guarded)
         for s in sigs:
             s.evidence.append(usage_eid)
-        risk.apply(d, sigs + risk.metadata_signals(d))
+        md_sigs = risk.metadata_signals(d)
+        if d.declared and not d.usage and d.required_by and not tool_use:
+            md_sigs = risk.indirect(md_sigs, d.required_by)
+        risk.apply(d, sigs + md_sigs)
+
+    for r in ms.runners:
+        dist = RUNNER_DISTS.get(r.name)
+        if dist and dist in by_name:
+            sig = risk.dead_runner_signal(
+                by_name[dist], r.command, f"{r.location.file}:{r.location.line}"
+            )
+            if sig:
+                risk.apply(by_name[dist], [sig])
 
     # Imports of stdlib modules removed in 3.12/3.13 are migration candidates too.
     for mod, locs in sorted(us.removed_stdlib.items()):

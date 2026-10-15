@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import httpx
 import pytest
+import respx
 
 from engine.config import Settings
 from engine.ingest.ingest import ingest, python_hints, repo_name
@@ -205,12 +207,17 @@ def test_python_hints_empty(tmp_path: Path) -> None:
     assert python_hints(tmp_path) == []
 
 
-def test_scan_stage_via_pipeline(settings: Settings) -> None:
+@respx.mock
+def test_scan_stage_via_pipeline(settings: Settings, monkeypatch: pytest.MonkeyPatch) -> None:
     from engine.pipeline import run_pipeline
 
+    monkeypatch.setattr("engine.scan.metadata.github_token", lambda s: None)
+    respx.get(url__regex=r"https://pypi\.org/.*").mock(return_value=httpx.Response(404, json={}))
     run = Run.create(str(REPOS / "poetry_app"), settings=settings)
     run_pipeline(run, ["ingest", "scan"])
     res = run.load_stage("scan", ScanResult)
     attrs = res.dep("attrs")
     assert attrs and attrs.import_names == ["attr"] and attrs.usage
     assert any(s.kind == "decorator" for s in attrs.usage)
+    toml_dep = res.dep("toml")
+    assert toml_dep and any(s.kind == "not_on_pypi" for s in toml_dep.signals)  # mocked 404

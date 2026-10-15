@@ -1,5 +1,12 @@
 # Changelog
 
+## m2 — Metadata + risk scoring + `scan` table
+- Async, concurrent PyPI + GitHub metadata with a TTL disk cache and replay (cache-only) mode; trimmed raw responses stored as evidence.
+- Per targeted version: latest, release history, days since last release, majors/minors behind, yanked, requires_python, cp312/cp313/universal wheels, Requires-Dist, GitHub archived/pushed_at.
+- GitHub token from `GITHUB_TOKEN`, else the local `gh auth token`; degrades gracefully when rate-limited.
+- Deterministic metadata signals (stale, inactive_classifier, archived_upstream, far_behind, old_major_pin, yanked, py312_313_incompatible, not_on_pypi, dead_test_runner) and transitive-pin downgrade; scoring documented in docs/CAPSULE_SPEC.md.
+- `exitcapsule scan <repo>` Rich risk table. Verified on the target repo and on miguelgrinberg/microblog with no code changes.
+
 ## m1 — Ingest + manifests + AST usage + mapping
 - Ingest: shallow clone / local copy, commit SHA, branch, Python-version hints (pyproject, setup.*, README, Dockerfile, CI, tox, Makefile).
 - Manifests: requirements*.txt (`-r`/`-c` includes, continuations, commented-out pins, VCS/egg URLs), PEP 621 + optional deps, PEP 735 groups, Poetry, setup.cfg, setup.py (AST, never executed), Pipfile; runtime/dev/test/build groups; cross-manifest conflicts; declared test runners; install paths; console scripts.
