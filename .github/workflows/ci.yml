@@ -26,4 +26,7 @@ jobs:
           GEMMA_PROVIDER: fake
       - run: uv run coverage report
       - name: doctor (no Gemma key in CI)
-        run: uv run exitcapsule doctor --no-gemma
+        shell: bash
+        run: |
+          cp .env.example .env
+          uv run exitcapsule doctor --no-gemma
